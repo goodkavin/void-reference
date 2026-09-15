@@ -14,7 +14,7 @@ Written from things we have run for real clients, not from a vendor sheet. Tool-
 | 04 | Semantic layer | 01 |
 | 05 | Context layer (OKF) | 04 |
 | 06 | Chat agent with role-based access | 04, 05 |
-| 07 | Agentic BI | 04, 05, 06 |
+| 07 | [Agentic BI](agentic-bi/) | 04, 05, 06 |
 | 08 | LLM judge / tester | 06, 07 |
 | 09 | Alert bot | 03, 06 |
 | 10 | Signal dashboard | 04, 05, 09 |
@@ -26,7 +26,7 @@ Cards land one at a time. A row links to its folder once it exists.
 ## Each folder
 
 ```
-NN-slug/
+slug/
 ├── README.md   the card: what, depends on, outcome, pitfalls, pattern, example stack, setup
 └── SKILL.md    the same, as an Agent Skill (agentskills.io) your coding agent can install
 ```
