@@ -9,7 +9,7 @@ Not a replacement for the dashboard. The dashboard answers the questions you pla
 - **Lightweight data warehouse**: something queryable with SQL, modeled, one place. Without it the agent is guessing across spreadsheets.
 - **Semantic layer**: metric definitions, grain, timezone, taxonomies, written once. This is the component that makes agentic BI honest. Install it first or at the same time.
 - **Chat agent with role-based access**: the surface people actually use, with an allowlist so a finance question cannot be answered in the sales group.
-- Recommended alongside: **LLM judge**, a golden question set run before every deploy.
+- Recommended alongside: **LLM judge**, a golden question set run on the host before a change ships.
 
 ## Proven outcome
 
@@ -30,7 +30,7 @@ A second finding from the same run: the host held the same semantics three times
 - **UTC timestamps, local business days.** Bucketing `created_at::date` in UTC shifts a Bangkok day by seven hours. Pin the session timezone in the tool, never in the prompt.
 - **"Past week" that includes today.** Partial days give non-reproducible answers. Define named periods once (rolling 7 complete days, ISO weeks) and expose one `resolve_period` tool that everything else calls.
 - **No freshness stamp.** An answer without "data as of" is wrong the day the pipeline stalls and nobody knows. Curated tools append the max loaded date; the agent passes it through.
-- **Measuring liveness, not answers.** A bot can be up, authenticated, connected, and answering `ERROR` for 31 hours. The judge (golden questions on the real host, before cutover and on a timer) is the check that catches this. Health checks do not.
+- **Measuring liveness, not answers.** A bot can be up, authenticated, connected, and answering `ERROR` for 31 hours. A timed check that the bot returns a real answer (the alert bot, see that component) is what catches this. Liveness checks do not.
 - **Replacing the customer's BI tool.** Do not. Point it at the same modeled warehouse and let chat take the long tail.
 
 ## Pattern
@@ -60,7 +60,7 @@ flowchart TB
 
   subgraph Loop["Learning loop"]
     direction LR
-    J[Judge<br/>golden questions on the real host<br/>before cutover and on a timer]
+    J[Judge<br/>golden questions on the real host<br/>run on the host before a change ships]
     FB[Corrections from users]
   end
 
@@ -91,7 +91,7 @@ What we run. Any equivalent works.
 | Semantic layer | one skill folder: `SKILL.md` router + `reference/{data-dictionary,metrics,taxonomies,examples}.md`, also served as MCP resources |
 | Tools | Python FastMCP server, 7 tools, `readOnlyHint: true`, SQL guarded with `pglast` |
 | Agent + chat | Claude Code with the Telegram / Discord channel plugin; allowlist + pairing for access |
-| Judge | `golden.yaml` of question → expected answer, run on the host before cutover and nightly |
+| Judge | `golden.yaml` of question → expected answer, run on the host before a change ships; a health timer only checks that the bot answers |
 | Charts | one governed renderer, JSON spec → themed PNG, stable hue per channel |
 
 ## Setup
