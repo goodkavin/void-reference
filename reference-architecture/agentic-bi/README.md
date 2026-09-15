@@ -37,58 +37,49 @@ A second finding from the same run: the host held the same semantics three times
 
 ```mermaid
 flowchart TB
-  subgraph Chat["Chat surface"]
-    U[User in Telegram / Discord / IDE]
-  end
+  U[User in Telegram / Discord / IDE]
 
   subgraph Agent["LLM agent"]
+    direction TB
     A[Agent runtime<br/>role-based access: allowlist + pairing]
-    SK[Skill router<br/>invariants · tool routing · gotchas index]
+    SK[Skill router<br/>invariants · which tool for which question · gotchas]
+    A --- SK
   end
 
-  subgraph Context["Business context (read at answer time)"]
-    SL[Semantic layer<br/>data dictionary · metric definitions · taxonomies · verified examples]
+  subgraph Context["Business context, read at answer time"]
+    direction LR
+    SL[Semantic layer<br/>data dictionary · metric definitions<br/>taxonomies · verified examples]
     CP[Context pack<br/>company · people · systems · rules · SOPs]
   end
 
-  subgraph Tools["Data tools (MCP, read-only)"]
-    T1[Curated metrics<br/>sales by channel / product group / target<br/>period + compare-previous]
+  subgraph Tools["Data tools, MCP, read-only"]
+    direction LR
+    T1[Curated metrics<br/>by channel / product group / target<br/>period + compare previous]
     T2[Guarded SQL<br/>one SELECT · parsed · LIMIT · timeout]
-    T3[Describe schema<br/>tables → grain → columns with business notes]
-    T4[Resolve period<br/>local-time date arithmetic, complete days]
+    T3[Describe schema<br/>tables → grain → columns with notes]
+    T4[Resolve period<br/>local time, complete days only]
   end
 
   subgraph Data["Data platform"]
-    DW[(Data warehouse<br/>one modeled source, read-only role)]
-    SCH[Scheduler<br/>extract · load · transform]
-    SRC[Sources<br/>ERP · marketplaces · sheets · ads]
+    direction TB
+    SRC[Sources<br/>ERP · marketplaces · sheets · ads] -->|scheduler: extract · load · transform| DW[(Data warehouse<br/>one modeled source, read-only role)]
   end
 
   subgraph Loop["Learning loop"]
+    direction LR
     J[Judge<br/>golden questions on the real host<br/>before cutover and on a timer]
-    FB[Corrections from users<br/>→ semantic layer or context pack]
+    FB[Corrections from users]
   end
 
-  U -->|question| A
-  A -->|answer: number · date · chart · provenance| U
-  A --> SK
-  SK -.->|reads| SL
-  SK -.->|reads| CP
-  A -->|tool call| T1
-  A -->|tool call| T2
-  A -->|tool call| T3
-  A -->|tool call| T4
-  T1 -->|SQL built from definitions| DW
-  T2 -->|validated SQL| DW
-  T3 -->|catalog + dictionary notes| DW
-  SL -.->|definitions · filters · timezone| T1
-  SL -.->|required filters · PII marks| T2
-  SL -.->|grain · joins| T3
-  SRC --> SCH --> DW
-  J -->|expected answers| A
+  U -->|question| Agent
+  Agent -->|answer: number · date · chart · provenance| U
+  Agent -->|tool call / result| Tools
+  Tools -->|SQL built from definitions / rows| DW
+  Context -.->|read by the agent: how to think| Agent
+  Context -.->|enforced in the tools: filters · timezone · PII marks| Tools
+  Loop -.->|expected answers · fixes| Context
   U -.->|"that number is wrong"| FB
-  FB -.-> SL
-  FB -.-> CP
+  J -->|runs the golden set| Agent
 ```
 
 Solid lines carry a request or data. Dashed lines are reads and feedback. The semantic layer is read by both the agent (how to think) and the tools (what is enforced); nothing about a metric is decided in the prompt.
@@ -107,7 +98,7 @@ What we run. Any equivalent works.
 |---|---|
 | Data warehouse | DuckDB (file per customer) or the customer's Postgres; dbt for models |
 | Semantic layer | one skill folder: `SKILL.md` router + `reference/{data-dictionary,metrics,taxonomies,examples}.md`, also served as MCP resources |
-| Tools | Python FastMCP server, 5 tools, `readOnlyHint: true`, SQL guarded with `pglast` |
+| Tools | Python FastMCP server, 7 tools, `readOnlyHint: true`, SQL guarded with `pglast` |
 | Agent + chat | Claude Code with the Telegram / Discord channel plugin; allowlist + pairing for access |
 | Judge | `golden.yaml` of question → expected answer, run on the host before cutover and nightly |
 | Charts | one governed renderer, JSON spec → themed PNG, stable hue per channel |
