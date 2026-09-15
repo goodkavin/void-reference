@@ -38,13 +38,7 @@ A second finding from the same run: the host held the same semantics three times
 ```mermaid
 flowchart TB
   U[User in Telegram / Discord / IDE]
-
-  subgraph Agent["LLM agent"]
-    direction TB
-    A[Agent runtime<br/>role-based access: allowlist + pairing]
-    SK[Skill router<br/>invariants · which tool for which question · gotchas]
-    A --- SK
-  end
+  A[LLM agent<br/>role-based access: allowlist + pairing<br/>skill router: invariants · which tool for which question · gotchas]
 
   subgraph Context["Business context, read at answer time"]
     direction LR
@@ -60,10 +54,9 @@ flowchart TB
     T4[Resolve period<br/>local time, complete days only]
   end
 
-  subgraph Data["Data platform"]
-    direction TB
-    SRC[Sources<br/>ERP · marketplaces · sheets · ads] -->|scheduler: extract · load · transform| DW[(Data warehouse<br/>one modeled source, read-only role)]
-  end
+  DW[(Data warehouse<br/>one modeled source, read-only role)]
+  SCH[Scheduler<br/>extract · load · transform]
+  SRC[Sources<br/>ERP · marketplaces · sheets · ads]
 
   subgraph Loop["Learning loop"]
     direction LR
@@ -71,18 +64,16 @@ flowchart TB
     FB[Corrections from users]
   end
 
-  U -->|question| Agent
-  Agent -->|answer: number · date · chart · provenance| U
-  Agent -->|tool call / result| Tools
-  Tools -->|SQL built from definitions / rows| DW
-  Context -.->|read by the agent: how to think| Agent
-  Context -.->|enforced in the tools: filters · timezone · PII marks| Tools
+  U <-->|question / answer: number · date · chart · provenance| A
+  A <-->|tool call / result| Tools
+  Tools -->|SQL built from the definitions / rows| DW
+  SRC --> SCH --> DW
+  Context -.->|how to think| A
+  Context -.->|enforced: filters · timezone · PII marks| Tools
   Loop -.->|expected answers · fixes| Context
-  U -.->|"that number is wrong"| FB
-  J -->|runs the golden set| Agent
 ```
 
-Solid lines carry a request or data. Dashed lines are reads and feedback. The semantic layer is read by both the agent (how to think) and the tools (what is enforced); nothing about a metric is decided in the prompt.
+Solid lines carry a request or data. Dashed lines are reads and feedback. The business context is read by both the agent (how to think) and the tools (what is enforced); nothing about a metric is decided in the prompt.
 
 Three rules that hold regardless of vendor:
 
