@@ -58,7 +58,7 @@ Three rules that hold regardless of vendor:
 
 What we run. Any equivalent works.
 
-| Role | Ours |
+| Role | Example |
 |---|---|
 | Data warehouse | DuckDB (file per customer) or the customer's Postgres; dbt for models |
 | Semantic layer | one skill folder: `SKILL.md` router + `reference/{data-dictionary,metrics,taxonomies,examples}.md`, also served as MCP resources |
