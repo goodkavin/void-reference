@@ -35,18 +35,63 @@ A second finding from the same run: the host held the same semantics three times
 
 ## Pattern
 
+```mermaid
+flowchart TB
+  subgraph Chat["Chat surface"]
+    U[User in Telegram / Discord / IDE]
+  end
+
+  subgraph Agent["LLM agent"]
+    A[Agent runtime<br/>role-based access: allowlist + pairing]
+    SK[Skill router<br/>invariants · tool routing · gotchas index]
+  end
+
+  subgraph Context["Business context (read at answer time)"]
+    SL[Semantic layer<br/>data dictionary · metric definitions · taxonomies · verified examples]
+    CP[Context pack<br/>company · people · systems · rules · SOPs]
+  end
+
+  subgraph Tools["Data tools (MCP, read-only)"]
+    T1[Curated metrics<br/>sales by channel / product group / target<br/>period + compare-previous]
+    T2[Guarded SQL<br/>one SELECT · parsed · LIMIT · timeout]
+    T3[Describe schema<br/>tables → grain → columns with business notes]
+    T4[Resolve period<br/>local-time date arithmetic, complete days]
+  end
+
+  subgraph Data["Data platform"]
+    DW[(Data warehouse<br/>one modeled source, read-only role)]
+    SCH[Scheduler<br/>extract · load · transform]
+    SRC[Sources<br/>ERP · marketplaces · sheets · ads]
+  end
+
+  subgraph Loop["Learning loop"]
+    J[Judge<br/>golden questions on the real host<br/>before cutover and on a timer]
+    FB[Corrections from users<br/>→ semantic layer or context pack]
+  end
+
+  U -->|question| A
+  A -->|answer: number · date · chart · provenance| U
+  A --> SK
+  SK -.->|reads| SL
+  SK -.->|reads| CP
+  A -->|tool call| T1
+  A -->|tool call| T2
+  A -->|tool call| T3
+  A -->|tool call| T4
+  T1 -->|SQL built from definitions| DW
+  T2 -->|validated SQL| DW
+  T3 -->|catalog + dictionary notes| DW
+  SL -.->|definitions · filters · timezone| T1
+  SL -.->|required filters · PII marks| T2
+  SL -.->|grain · joins| T3
+  SRC --> SCH --> DW
+  J -->|expected answers| A
+  U -.->|"that number is wrong"| FB
+  FB -.-> SL
+  FB -.-> CP
 ```
-chat (Telegram / Discord / IDE)
-  └─ agent
-       ├─ reads: semantic layer (definitions, grain, timezone, taxonomies, verified examples)
-       └─ calls: read-only tools
-            ├─ curated metrics   sales by channel / product group / period, comparison windows
-            ├─ guarded SQL       one SELECT, validated, capped, timed out
-            ├─ describe schema   progressive: tables → grain → columns with business notes
-            └─ resolve period    deterministic local-time date arithmetic
-                 └─ data warehouse
-judge: golden questions with expected answers, run before every deploy
-```
+
+Solid lines carry a request or data. Dashed lines are reads and feedback. The semantic layer is read by both the agent (how to think) and the tools (what is enforced); nothing about a metric is decided in the prompt.
 
 Three rules that hold regardless of vendor:
 

@@ -17,7 +17,7 @@ One number from one real engagement. Anonymized. No adjectives.
 
 ## Pattern
 
-Tool-agnostic. The shape of the thing in five lines or a small diagram.
+Tool-agnostic. A Mermaid `flowchart TB` (GitHub renders it): subgraphs per layer, labelled edges, solid for requests and data, dashed for reads and feedback. More detail than the carousel slide: this is the file the DM sends, so it carries the tool list, the guards and the loop.
 
 ## Example stack
 
