@@ -12,7 +12,7 @@ Written from things we have run for real clients, not from a vendor sheet. Tool-
 | 02 | Unstructured data ETL (Sheets, PDF, chat exports) | 01 |
 | 03 | Automated parity checks | 01, 02 |
 | 04 | Semantic layer | 01 |
-| 05 | Context layer (OKF) | 04 |
+| 05 | [Context layer](context-layer/) (OKF) | 04 |
 | 06 | Chat agent with role-based access | 04, 05 |
 | 07 | [Agentic BI](agentic-bi/) | 04, 05, 06 |
 | 08 | LLM judge / tester | 06, 07 |
